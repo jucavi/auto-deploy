@@ -22,21 +22,21 @@
               <AnchorPane fx:id="datasourceTab" minHeight="0.0" minWidth="0.0" prefHeight="371.0" prefWidth="622.0">
                      <children>
                         <Label layoutX="29.0" layoutY="42.0" prefHeight="17.0" prefWidth="54.0" text="Database" />
-                        <ComboBox fx:id="cbxDatabaseSource" layoutX="94.0" layoutY="38.0" prefWidth="150.0" promptText="Select Database" />
+                        <ComboBox fx:id="cbxDatabaseSource" layoutX="94.0" layoutY="38.0" prefWidth="150.0" promptText="Seelect RDBMS" />
                         <Label layoutX="29.0" layoutY="80.0" prefHeight="17.0" prefWidth="56.0" text="URL" />
                         <TextField fx:id="textFieldDatabaseUrl" layoutX="95.0" layoutY="76.0" prefHeight="25.0" prefWidth="339.0" promptText="localhost:3306" />
                         <Label layoutX="29.0" layoutY="119.0" prefHeight="17.0" prefWidth="55.0" text="User" />
                         <TextField fx:id="textFieldUsername" layoutX="95.0" layoutY="115.0" prefHeight="25.0" prefWidth="169.0" promptText="Username" />
                         <Label layoutX="29.0" layoutY="157.0" prefHeight="17.0" prefWidth="55.0" text="Password" />
                         <PasswordField fx:id="textFieldPassword" layoutX="94.0" layoutY="153.0" prefHeight="25.0" prefWidth="170.0" promptText="Password" />
-                        <Button fx:id="btnTestConnection" layoutX="31.0" layoutY="201.0" mnemonicParsing="false" onAction="#testConnection" prefHeight="25.0" prefWidth="129.0" text="Test Connection" />
+                        <Button fx:id="btnTestConnection" layoutX="31.0" layoutY="201.0" mnemonicParsing="false" onAction="#testConnection" prefHeight="25.0" prefWidth="129.0" text="Add Connection" />
                         <Label fx:id="labelConnectionStatus" layoutX="28.0" layoutY="240.0" prefHeight="17.0" prefWidth="623.0" />
                         <Button fx:id="btnResetDatasource" layoutX="179.0" layoutY="201.0" mnemonicParsing="false" onAction="#resetDatasource" prefHeight="25.0" prefWidth="129.0" text="Reset" />
                      </children>
                   </AnchorPane>
             </content>
           </Tab>
-          <Tab text="Versioning">
+          <Tab fx:id="tabVersioning" disable="true" text="Versioning">
             <content>
               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="383.0" prefWidth="685.0">
                      <children>
@@ -50,16 +50,16 @@
                                  </children></AnchorPane>
                           </content>
                         </ScrollPane>
-                        <ComboBox fx:id="cbxVersion" layoutX="502.0" layoutY="97.0" prefWidth="150.0" />
+                        <ComboBox fx:id="cbxVersion" layoutX="502.0" layoutY="97.0" prefWidth="150.0" promptText="None" />
                         <Label layoutX="502.0" layoutY="68.0" prefHeight="17.0" prefWidth="101.0" text="Installed version" />
                         <Button fx:id="btnSetupMigration" disable="true" layoutX="502.0" layoutY="317.0" mnemonicParsing="false" onAction="#setupMigration" prefHeight="25.0" prefWidth="119.0" text="Setup Migration" />
                         <Label layoutX="28.0" layoutY="68.0" prefHeight="17.0" prefWidth="114.0" text="Choose for deploy" />
                         <CheckBox fx:id="chbxNewDeploy" layoutX="502.0" layoutY="140.0" mnemonicParsing="false" nodeOrientation="RIGHT_TO_LEFT" onAction="#disableVersionCbx" text="New Deploy?" />
-                        <Label fx:id="labelMigrationStatus" layoutX="28.0" layoutY="362.0" />
+                        <Label fx:id="labelMigrationStatus" layoutX="28.0" layoutY="362.0" prefHeight="17.0" prefWidth="628.0" />
                      </children></AnchorPane>
             </content>
           </Tab>
-            <Tab text="Deploy">
+            <Tab fx:id="tabDeploy" disable="true" text="Deploy">
               <content>
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
               </content>

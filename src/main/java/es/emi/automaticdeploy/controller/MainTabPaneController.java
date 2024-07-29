@@ -1,8 +1,8 @@
 package es.emi.automaticdeploy.controller;
 
 import es.emi.automaticdeploy.constant.DataSource;
-import es.emi.automaticdeploy.constant.ExecType;
 import es.emi.automaticdeploy.entity.ChangeLog;
+import es.emi.automaticdeploy.entity.ChangeLogLock;
 import es.emi.automaticdeploy.entity.persistence.DatabaseProperties;
 import es.emi.automaticdeploy.entity.persistence.MySQLDBRM;
 import es.emi.automaticdeploy.entity.persistence.PostgreSQLDBRM;
@@ -30,10 +30,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.ResourceBundle;
 
 public class MainTabPaneController implements Initializable {
 
@@ -59,6 +59,12 @@ public class MainTabPaneController implements Initializable {
     public ScrollPane scrPaneWarFiles;
     @FXML
     public ComboBox<DataSource> cbxDatabaseSource;
+    @FXML
+    public Tab tabDeploy;
+    @FXML
+    public Label labelMigrationStatus;
+    @FXML
+    public Tab tabVersioning;
     @FXML
     private TabPane tabPane;
     @FXML
@@ -112,6 +118,7 @@ public class MainTabPaneController implements Initializable {
             if (connection != null) {
                 labelConnectionStatus.setTextFill(success);
                 labelConnectionStatus.setText("Connection successful!\n");
+                tabVersioning.setDisable(false);
             }
         } catch (Exception e) {
             labelConnectionStatus.setTextFill(error);
@@ -161,6 +168,8 @@ public class MainTabPaneController implements Initializable {
 
         btnSetupMigration.setDisable(
                 checkAnyCheckboxSelected() || chbxNewDeploy.isSelected());
+
+        tabDeploy.setDisable(!(cbxVersion.isDisable() && checkAnyCheckboxSelected()));
     }
 
     private boolean checkAnyCheckboxSelected() {
@@ -175,7 +184,15 @@ public class MainTabPaneController implements Initializable {
     public void setupMigration(ActionEvent actionEvent) throws IOException {
 
         String warFolderPath = labelDirectoryPath.getText();
-        Version currentVersion = new Version(cbxVersion.getValue());
+        Version version = null;
+
+        try {
+            version = new Version(cbxVersion.getValue());
+
+        } catch (Exception e) {
+            labelConnectionStatus.setText(e.getMessage());
+            return;
+        }
 
         List<String> warsSelected = vboxWarFiles.getChildren()
                 .stream()
@@ -191,38 +208,66 @@ public class MainTabPaneController implements Initializable {
             Path basePath = Paths.get(tempPath.toString(), BASE_PATH);
             Path changesetPath = Paths.get(basePath.toString(), CHANGESET_DIR_RELATIVE_PATH);
 
-            List<Path> versionFolders = DirectoryUtils.getAllDirectories(changesetPath.toString());
 
-            for (Path versionFolder : versionFolders) {
-                Version version = new Version(versionFolder.getFileName().toString());
+            // Database associated with war folder
+            dbp.setDatabase("changeset_test");
+            // if not database return;
 
-                if (version.compareTo(currentVersion) > 0) {
-                    continue;
-                }
+            try {
 
-                dbp.setDatabase("changeset_test");
+                SessionFactory sessionFactory = HibernateUtils.getSessionFactory(dbp);
+                Session session = sessionFactory.openSession();
+                Transaction transaction = session.beginTransaction();
 
-                List<Path> files = DirectoryUtils.getAllFiles(versionFolder.toString());
+                List<Path> versionFolders = DirectoryUtils.getAllDirectories(changesetPath.toString());
+                // TODO: SORT BY VERSION NEEDED!!!
 
-                try (Connection connection =
-                             DriverManager.getConnection(
-                                     dbp.getUrl(),
-                                     dbp.getUser(),
-                                     dbp.getPassword())) {
+                for (Path versionFolder : versionFolders) {
+                    Version currentVersion = null;
 
-                    createChangeLogTable(connection);
+                    try {
+                        currentVersion = new Version(versionFolder.getFileName().toString());
 
-                    for (Path file : files) {
-                        List<ChangeLog> changelogs = ChangeLogParser.parseChangeLog(basePath.toString(), file.toString(), 1L);
-
-                        for (ChangeLog cl : changelogs) {
-                            insertIntoChangeLogTable(connection, cl);
-                        }
+                    } catch (Exception e)  {
+                        continue;
                     }
 
-                }  catch (SQLException e) {
-                    System.out.println(e.getMessage());
+                    if (currentVersion.compareTo(version) > 0) {
+                        continue;
+                    }
+
+                    List<Path> files = DirectoryUtils.getAllFiles(versionFolder.toString());
+                    // TODO: SORT BY NAME NEEDED!!!
+                    long orderExecuted = 1L;
+
+                    session.save(new ChangeLogLock(1L, false, null, null));
+
+                    for (Path file : files) {
+
+                        try {
+                            List<ChangeLog> changeLogs = ChangeLogParser.parseChangeLog(basePath.toString(), file.toString(), orderExecuted);
+
+                            for (ChangeLog changeLog : changeLogs) {
+                                session.save(changeLog);
+                            }
+
+                            orderExecuted += changeLogs.size();
+
+                            tabDeploy.setDisable(false);
+
+                        } catch (Exception e) {
+                            labelMigrationStatus.setText(e.getMessage());
+                        }
+                    }
                 }
+
+                transaction.commit();
+                session.close();
+                showAlert("Success", "ChangeLog tables created and populated successfully.");
+
+                btnSetupMigration.setDisable(true);
+            } catch (Exception e) {
+                labelMigrationStatus.setText(e.getMessage());
             }
         }
     }
@@ -310,48 +355,10 @@ public class MainTabPaneController implements Initializable {
         return directoryChooser.showDialog(stage);
     }
 
-    private void createChangeLogTable(Connection connection) throws SQLException {
-        String createTableSQL = "CREATE TABLE IF NOT EXISTS databasechangelog (" +
-                "ID VARCHAR(255) NOT NULL, " +
-                "AUTHOR VARCHAR(255) NOT NULL, " +
-                "FILENAME VARCHAR(255) NOT NULL, " +
-                "DATEEXECUTED TIMESTAMP NOT NULL, " +
-                "ORDEREXECUTED BIGINT NOT NULL, " +
-                "EXECTYPE VARCHAR(255) NOT NULL, " +
-                "MD5SUM VARCHAR(255), " +
-                "DESCRIPTION VARCHAR(255), " +
-                "COMMENTS VARCHAR(255), " +
-                "TAG VARCHAR(255), " +
-                "LIQUIBASE VARCHAR(255), " +
-                "CONTEXTS VARCHAR(255), " +
-                "LABELS VARCHAR(255), " +
-                "DEPLOYMENT_ID VARCHAR(255))";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(createTableSQL)) {
-            preparedStatement.executeUpdate();
-        }
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
-
-
-    private void insertIntoChangeLogTable(Connection connection, ChangeLog changeLog) throws SQLException {
-        String insertSQL = "INSERT INTO databasechangelog (ID, AUTHOR, FILENAME, DATEEXECUTED, ORDEREXECUTED, EXECTYPE, MD5SUM, DESCRIPTION, COMMENTS, TAG, LIQUIBASE, CONTEXTS, LABELS, DEPLOYMENT_ID) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
-            preparedStatement.setString(1, changeLog.getId());
-            preparedStatement.setString(2, changeLog.getAuthor());
-            preparedStatement.setString(3, changeLog.getFilename());
-            preparedStatement.setTimestamp(4, java.sql.Timestamp.valueOf(changeLog.getDateTime()));
-            preparedStatement.setLong(5, changeLog.getOrderExecuted());
-            preparedStatement.setString(6, ExecType.EXECUTED.name());
-            preparedStatement.setString(7, changeLog.getMd5Sum());
-            preparedStatement.setString(8, changeLog.getDescription());
-            preparedStatement.setString(9, changeLog.getComments());
-            preparedStatement.setString(10, changeLog.getTag());
-            preparedStatement.setString(11, changeLog.getLiquibase());
-            preparedStatement.setString(12, changeLog.getContexts());
-            preparedStatement.setString(13, changeLog.getLabels());
-            preparedStatement.setString(14, changeLog.getDeploymentId());
-            preparedStatement.executeUpdate();
-        }
-    }
-
 }
