@@ -19,6 +19,7 @@ module es.emi.automaticdeploy {
     opens es.emi.automaticdeploy to javafx.fxml;
     exports es.emi.automaticdeploy;
     exports es.emi.automaticdeploy.controller;
+    exports es.emi.automaticdeploy.constant;
     opens es.emi.automaticdeploy.controller to javafx.fxml;
     opens es.emi.automaticdeploy.entity to org.hibernate.orm.core;
 }
