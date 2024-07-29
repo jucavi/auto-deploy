@@ -53,6 +53,7 @@ public abstract class DatabaseProperties {
     public abstract String getUrl();
     public abstract String getDriver();
     public abstract String getDialect();
+    protected abstract void loadDriver();
 
     public String getBaseUrl() {
         return baseUrl;

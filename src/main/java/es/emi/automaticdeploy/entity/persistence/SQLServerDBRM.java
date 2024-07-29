@@ -46,4 +46,13 @@ public class SQLServerDBRM extends DatabaseProperties {
     public String getDialect() {
         return DIALECT;
     }
+
+    @Override
+    protected void loadDriver() {
+        try {
+            Class.forName(DRIVER);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Failed to load MySQL JDBC driver", e);
+        }
+    }
 }

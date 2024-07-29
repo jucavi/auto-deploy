@@ -5,7 +5,7 @@ import es.emi.automaticdeploy.util.URLUtils;
 public class MySQLDBRM extends DatabaseProperties {
 
     private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
-    private static final String DIALECT = "org.hibernate.dialect.MySQLDialect";
+    private static final String DIALECT = "org.hibernate.dialect.MySQL5InnoDBDialect";
 
     /**
      * Constructor
@@ -45,5 +45,15 @@ public class MySQLDBRM extends DatabaseProperties {
     @Override
     public String getDialect() {
         return DIALECT;
+    }
+
+
+    @Override
+    protected void loadDriver() {
+        try {
+            Class.forName(DRIVER);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Failed to load MySQL JDBC driver", e);
+        }
     }
 }
