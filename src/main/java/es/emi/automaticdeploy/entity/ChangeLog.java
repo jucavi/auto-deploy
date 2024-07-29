@@ -7,15 +7,18 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "databasechangelog")
+@IdClass(ChangeLogId.class)
 public class ChangeLog {
 
     @Id
     @Column(name = "ID", nullable = false)
     private String id;
 
+    @Id
     @Column(name = "AUTHOR", nullable = false)
     private String author;
 
+    @Id
     @Column(name = "FILENAME", nullable = false)
     private String filename;
 

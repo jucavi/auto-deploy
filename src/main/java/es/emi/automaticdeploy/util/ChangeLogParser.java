@@ -23,15 +23,15 @@ public class ChangeLogParser {
 
     public static List<ChangeLog> parseChangeLog(String basePath, String filePath, Long orderExecuted) throws IOException {
 
-        Path absolutePath = Paths.get(filePath);
+        Path absoluteFilePath = Paths.get(filePath);
         Path base = Paths.get(basePath);
 
-        List<String> lines = Files.readAllLines(absolutePath);
+        List<String> lines = Files.readAllLines(absoluteFilePath);
         List<ChangeLog> changeLogs = new ArrayList<>();
 
         String id;
         String author;
-        String filename = base.relativize(absolutePath).toString();
+        Path filename = base.relativize(absoluteFilePath);
 
         for (String line : lines) {
             line = line.trim();
@@ -63,7 +63,7 @@ public class ChangeLogParser {
                             new ChangeLog(
                                     id,
                                     author,
-                                    filename,
+                                    filename.toString(),
                                     dateTime,
                                     orderExecuted,
                                     EXECTYPE,
