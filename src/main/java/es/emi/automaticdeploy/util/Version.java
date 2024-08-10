@@ -8,10 +8,10 @@ public class Version implements Comparable<Version> {
     private static final String VERSION_REGEXP = "^\\d{1,2}\\.\\d{1,2}(\\.\\d{1,2})?(\\.\\d{1,2})?$";
     private static final Pattern VERSION_PATTERN = Pattern.compile(VERSION_REGEXP);
 
-    private int major;
-    private int minor;
-    private int patch;
-    private int build;
+    private final int major;
+    private final int minor;
+    private final int patch;
+    private final int build;
 
     public Version(int major, int minor, int patch, int build) {
         this.major = major;
