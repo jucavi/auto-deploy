@@ -10,13 +10,15 @@ import java.util.List;
 
 public class DirectoryUtils {
 
+    private static final String MESSAGE = "The provided path is not a directory or does not exist.";
+
     public static List<Path> getAllFiles(String directoryPath) throws IOException {
 
         List<Path> files = new ArrayList<>();
         Path dirPath = Paths.get(directoryPath);
 
         if (!Files.exists(dirPath) || !Files.isDirectory(dirPath)) {
-            throw new IllegalArgumentException("The provided path is not a directory or does not exist.");
+            throw new IllegalArgumentException(MESSAGE);
         }
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath)) {
@@ -36,7 +38,7 @@ public class DirectoryUtils {
         Path dirPath = Paths.get(directoryPath);
 
         if (!Files.exists(dirPath) || !Files.isDirectory(dirPath)) {
-            throw new IllegalArgumentException("The provided path is not a directory or does not exist.");
+            throw new IllegalArgumentException(MESSAGE);
         }
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath)) {

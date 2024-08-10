@@ -17,6 +17,9 @@
         <mysql.version>8.3.0</mysql.version>
         <postgres.version>42.3.9</postgres.version>
         <sqlserver.version>12.6.1.jre11</sqlserver.version>
+
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
     </properties>
 
     <dependencies>
@@ -146,7 +149,7 @@
                         <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>es.emi.automaticdeploy/es.emi.automaticdeploy.MainApplication</mainClass>
+                            <mainClass>es.emi.automaticdeploy.MainApplication</mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>

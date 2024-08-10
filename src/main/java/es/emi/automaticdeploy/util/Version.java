@@ -13,24 +13,27 @@ public class Version implements Comparable<Version> {
     private int patch;
     private int build;
 
-    public Version(String version) {
-        if (!isValidVersion(version.trim())) {
-            throw new IllegalArgumentException("Invalid version format");
-        }
-        parseVersion(version.trim());
+    public Version(int major, int minor, int patch, int build) {
+        this.major = major;
+        this.minor = minor;
+        this.patch = patch;
+        this.build = build;
     }
 
-    private boolean isValidVersion(String version) {
+    public static boolean isValidVersion(String version) {
         Matcher matcher = VERSION_PATTERN.matcher(version);
         return matcher.matches();
     }
 
-    private void parseVersion(String version) {
-        String[] parts = version.split("\\.");
-        major = Integer.parseInt(parts[0]);
-        minor = Integer.parseInt(parts[1]);
-        patch = parts.length > 2 ? Integer.parseInt(parts[2]) : 0;
-        build = parts.length > 3 ? Integer.parseInt(parts[3]) : 0;
+    public static Version parse(String version) throws NumberFormatException{
+
+        String[] parts = version.trim().split("\\.");
+        int major = Integer.parseInt(parts[0]);
+        int minor = Integer.parseInt(parts[1]);
+        int patch = parts.length > 2 ? Integer.parseInt(parts[2]) : 0;
+        int build = parts.length > 3 ? Integer.parseInt(parts[3]) : 0;
+
+        return new Version(major, minor, patch, build);
     }
 
     @Override

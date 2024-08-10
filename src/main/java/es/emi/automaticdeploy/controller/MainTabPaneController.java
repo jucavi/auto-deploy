@@ -30,10 +30,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class MainTabPaneController implements Initializable {
 
@@ -187,7 +185,7 @@ public class MainTabPaneController implements Initializable {
         Version version = null;
 
         try {
-            version = new Version(cbxVersion.getValue());
+            version = Version.parse(cbxVersion.getValue());
 
         } catch (Exception e) {
             labelConnectionStatus.setText(e.getMessage());
@@ -219,14 +217,26 @@ public class MainTabPaneController implements Initializable {
                 Session session = sessionFactory.openSession();
                 Transaction transaction = session.beginTransaction();
 
-                List<Path> versionFolders = DirectoryUtils.getAllDirectories(changesetPath.toString());
-                // TODO: SORT BY VERSION NEEDED!!!
+                List<Path> folderContent = DirectoryUtils.getAllDirectories(changesetPath.toString());
+                // SORT BY VERSION NEEDED!!!
+                List<Path> versionFolders = folderContent.stream()
+                        .filter(f -> Version.isValidVersion(f.getFileName().toString().trim()))
+                        .sorted((f1, f2) -> {
+                            Version v1 = Version.parse(f1.toString().trim());
+                            Version v2 = Version.parse(f2.toString().trim());
+
+                            return v1.compareTo(v2);
+                        })
+                        .toList();
+
+                // order executed counter
+                long orderExecuted = 1L;
 
                 for (Path versionFolder : versionFolders) {
                     Version currentVersion = null;
 
                     try {
-                        currentVersion = new Version(versionFolder.getFileName().toString());
+                        currentVersion = Version.parse(versionFolder.getFileName().toString());
 
                     } catch (Exception e)  {
                         continue;
@@ -236,9 +246,11 @@ public class MainTabPaneController implements Initializable {
                         continue;
                     }
 
+                    PrefixFilenameComparator prefixComparator = new PrefixFilenameComparator();
                     List<Path> files = DirectoryUtils.getAllFiles(versionFolder.toString());
-                    // TODO: SORT BY NAME NEEDED!!!
-                    long orderExecuted = 1L;
+
+                    // SORT BY NAME NEEDED!!!
+                    files.sort(prefixComparator);
 
                     session.save(new ChangeLogLock(1L, false, null, null));
 

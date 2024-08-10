@@ -6,7 +6,7 @@ public enum DataSource {
     PostgreSQL("PostgreSQL"),
     SQLServer("SQLServer");
 
-    private String label;
+    private final String label;
 
     DataSource(String label) {
         this.label = label;
