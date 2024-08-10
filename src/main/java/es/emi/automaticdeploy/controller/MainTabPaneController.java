@@ -141,7 +141,10 @@ public class MainTabPaneController implements Initializable {
         if (warDirectory != null) {
             List<Path> warFiles = WarFileReaderUtils.readWarFiles(warDirectory.toString());
 
-            scrPaneWarFiles.setDisable(false);
+            // reset vbox
+            vboxWarFiles.getChildren().clear();
+
+//            scrPaneWarFiles.setDisable(false);
             vboxWarFiles.setSpacing(10);
             vboxWarFiles.setPadding(new Insets(10, 10, 10, 10));
 
@@ -149,14 +152,22 @@ public class MainTabPaneController implements Initializable {
                 CheckBox checkBox = new CheckBox(warFile.getFileName().toString());
                 vboxWarFiles.getChildren().add(checkBox);
 
+                // Add listener for each file checkbox
                 checkBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+
                     btnSetupMigration.setDisable(
-                            checkAnyCheckboxSelected() || chbxNewDeploy.isSelected());
+                            !checkAnyCheckboxSelected() || chbxNewDeploy.isSelected());
+
+                    tabDeploy.setDisable(
+                            !(chbxNewDeploy.isSelected() && checkAnyCheckboxSelected()));
                 });
+                vboxWarFiles.setDisable(false);
+                scrPaneWarFiles.setDisable(false);
             }
 
         } else {
             scrPaneWarFiles.setDisable(true);
+            tabDeploy.setDisable(true);
         }
     }
 
@@ -165,9 +176,10 @@ public class MainTabPaneController implements Initializable {
         cbxVersion.setDisable(chbxNewDeploy.isSelected());
 
         btnSetupMigration.setDisable(
-                checkAnyCheckboxSelected() || chbxNewDeploy.isSelected());
+                !checkAnyCheckboxSelected() || chbxNewDeploy.isSelected());
 
-        tabDeploy.setDisable(!(cbxVersion.isDisable() && checkAnyCheckboxSelected()));
+        tabDeploy.setDisable(
+                !(chbxNewDeploy.isSelected() && checkAnyCheckboxSelected()));
     }
 
     private boolean checkAnyCheckboxSelected() {
@@ -175,7 +187,7 @@ public class MainTabPaneController implements Initializable {
                 .stream()
                 .filter(node -> node instanceof CheckBox)
                 .map(node -> (CheckBox) node)
-                .noneMatch(CheckBox::isSelected);
+                .anyMatch(CheckBox::isSelected);
     }
 
     @FXML
