@@ -28,9 +28,13 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.InvalidParameterException;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.ResourceBundle;
 
 
 public class MainTabPaneController implements Initializable {
@@ -212,6 +216,8 @@ public class MainTabPaneController implements Initializable {
                 .map(Labeled::getText)
                 .toList();
 
+        // TODO: Get the number of war migrations and compare for setting a success message
+
         for (String war : warsSelected) {
             Path absolute = Paths.get(warFolderPath, war);
             Path tempPath = WarFileHandlerUtils.unpack(absolute.toString(), TEMP_DIR);
@@ -219,13 +225,24 @@ public class MainTabPaneController implements Initializable {
             Path changesetPath = Paths.get(basePath.toString(), CHANGESET_DIR_RELATIVE_PATH);
 
 
+            String[] warChunks = war.trim().split("##");
+
+            if (warChunks.length == 1) {
+                throw new InvalidParameterException("War file must have a valid pattern: name##version.war");
+            }
+
+            String warPrefix = warChunks[0].trim();
+
             // Database associated with war folder
-            dbp.setDatabase("changeset_test");
+            String databaseName = ConfigPropertiesUtil.getProperty(warPrefix + ".database.name"); // raise exception
+            dbp.setDatabase(databaseName);
             // if not database return;
 
+            SessionFactory sessionFactory = null;
             try {
 
-                SessionFactory sessionFactory = HibernateUtils.getSessionFactory(dbp);
+                // not singleton class (modified)
+                sessionFactory = HibernateUtils.getSessionFactory(dbp);
                 Session session = sessionFactory.openSession();
                 Transaction transaction = session.beginTransaction();
 
@@ -234,8 +251,12 @@ public class MainTabPaneController implements Initializable {
                 List<Path> versionFolders = folderContent.stream()
                         .filter(f -> Version.isValidVersion(f.getFileName().toString().trim()))
                         .sorted((f1, f2) -> {
-                            Version v1 = Version.parse(f1.toString().trim());
-                            Version v2 = Version.parse(f2.toString().trim());
+
+                            String file1 = f1.getFileName().toString().trim();
+                            String file2 = f2.getFileName().toString().trim();
+
+                            Version v1 = Version.parse(file1);
+                            Version v2 = Version.parse(file2);
 
                             return v1.compareTo(v2);
                         })
@@ -243,6 +264,7 @@ public class MainTabPaneController implements Initializable {
 
                 // order executed counter
                 long orderExecuted = 1L;
+                session.save(new ChangeLogLock(1L, false, null, null));
 
                 for (Path versionFolder : versionFolders) {
                     Version currentVersion = null;
@@ -264,7 +286,6 @@ public class MainTabPaneController implements Initializable {
                     // SORT BY NAME NEEDED!!!
                     files.sort(prefixComparator);
 
-                    session.save(new ChangeLogLock(1L, false, null, null));
 
                     for (Path file : files) {
 
@@ -287,10 +308,16 @@ public class MainTabPaneController implements Initializable {
 
                 transaction.commit();
                 session.close();
-                showAlert("Success", "ChangeLog tables created and populated successfully.");
+                sessionFactory.close();
+                //showAlert("Success", "ChangeLog tables created and populated successfully.");
 
                 btnSetupMigration.setDisable(true);
+
             } catch (Exception e) {
+
+                if (sessionFactory != null) {
+                    sessionFactory.close();
+                }
                 labelMigrationStatus.setText(e.getMessage());
             }
         }
