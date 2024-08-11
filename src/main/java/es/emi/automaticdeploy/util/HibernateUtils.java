@@ -12,24 +12,45 @@ public class HibernateUtils {
 
     private static SessionFactory sessionFactory;
 
+//    public static SessionFactory getSessionFactory(DatabaseProperties dbProperties) {
+//        if (sessionFactory == null) {
+//            try {
+//
+//                Configuration configuration = getConfiguration(dbProperties);
+//
+//                // Annotated classes
+//                configuration.addAnnotatedClass(ChangeLog.class);
+//                configuration.addAnnotatedClass(ChangeLogLock.class);
+//
+//                ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
+//                        .applySettings(configuration.getProperties()).build();
+//
+//                sessionFactory = configuration.buildSessionFactory(serviceRegistry);
+//            } catch (Exception e) {
+//                throw new RuntimeException("There was an error building the factory");
+//            }
+//        }
+//        return sessionFactory;
+//    }
+
     public static SessionFactory getSessionFactory(DatabaseProperties dbProperties) {
-        if (sessionFactory == null) {
-            try {
 
-                Configuration configuration = getConfiguration(dbProperties);
+        try {
 
-                // Annotated classes
-                configuration.addAnnotatedClass(ChangeLog.class);
-                configuration.addAnnotatedClass(ChangeLogLock.class);
+            Configuration configuration = getConfiguration(dbProperties);
 
-                ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
-                        .applySettings(configuration.getProperties()).build();
+            // Annotated classes
+            configuration.addAnnotatedClass(ChangeLog.class);
+            configuration.addAnnotatedClass(ChangeLogLock.class);
 
-                sessionFactory = configuration.buildSessionFactory(serviceRegistry);
-            } catch (Exception e) {
-                throw new RuntimeException("There was an error building the factory");
-            }
+            ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
+                    .applySettings(configuration.getProperties()).build();
+
+            sessionFactory = configuration.buildSessionFactory(serviceRegistry);
+        } catch (Exception e) {
+            throw new RuntimeException("There was an error building the factory");
         }
+
         return sessionFactory;
     }
 
